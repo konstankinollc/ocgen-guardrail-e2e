@@ -1,0 +1,17 @@
+---
+name: team
+description: Run a parallel Agent Team on one task
+argument-hint: "[task]"
+disable-model-invocation: true
+---
+Task: $ARGUMENTS
+
+Form an Agent Team: spawn teammates that work in parallel, using these roles:
+- explorer
+- implementer
+- reviewer
+
+Give each teammate an independent slice (don't let two edit the same files); let them
+coordinate through the shared task list and direct messages, then synthesize the results.
+3–5 teammates is the sweet spot. Name teammates after their role, numbered when a role has
+several (`implementer-1`, `implementer-2`): task and risk owners in the plan are these names.

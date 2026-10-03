@@ -1,0 +1,168 @@
+---
+name: inquire
+description: Understand a codebase by asking questions — sharpen each one, answer with evidence, get a hint toward the next
+argument-hint: "[topic or first question — empty to resume]"
+allowed-tools: Bash(ocgen notes open:*)
+---
+Help me understand this codebase: $ARGUMENTS
+
+Be my research partner, not an oracle: answer with evidence, and coach me toward better questions
+— with hints, never by writing the next question for me.
+Stay read-only — the only file written is the ledger, and a background helper writes it (step 4).
+
+## 0. Resume or orient
+Each topic has a ledger at `.claude/notes/<topic-slug>.md` — the slug is lowercase letters, digits
+and hyphens (`request-flow`); make sure `.claude/notes/` is git-ignored (add the line if it is
+missing). Each ledger has a visual companion, `.claude/notes/<topic-slug>.html`: ocgen renders it
+from the Markdown after every write and shows it in my browser, refreshing the tab that already
+shows it — never write or edit the `.html` yourself. If this session runs inside a worktree (its path is under
+`.claude/worktrees/`), warn me first: notes written here are lost when the worktree is removed, so
+studying — which is read-only — belongs in the main checkout.
+
+- **No arguments** (or `resume`): list the ledgers in `.claude/notes/` — topic, last updated, number
+  of open questions — most recent first, and let me pick one. If there are none, ask for a topic.
+- **With arguments:** match an existing ledger by its file name or its `Topic:` line. If one
+  matches, resume it; otherwise start a new ledger and orient.
+
+**Refresher** (when resuming — keep it to one screen, before anything else). First run
+`ocgen notes open <topic-slug>` to put the ledger's page in front of me; if that fails (no ocgen),
+carry on without it.
+1. **Where we left off** — the ledger's last question, in one line, and the hint that followed it.
+2. **What you know** — the ledger's **Mental model** bullets.
+3. **What changed since** — run `git log --oneline <ledger Commit>..HEAD -- <files cited in the
+   ledger>`. Mark every answer whose cited files changed as **Stale — re-verify** (the helper
+   appends ` · Stale` to its `### Q` heading), and offer to re-check those first. If this isn't a git repo, say that you can't check for changes.
+4. **Warm-up** (optional, one line) — offer 2 quick recall questions from earlier answers; skip it
+   if I decline.
+5. Ask what I want to ask next — following that hint, re-verifying stale answers, or something
+   new. Don't propose the question.
+
+**Orient** (new topic): in parallel and read-only (explorer subagents where useful), map entry
+points, the module map, core types and data flow, build/test commands, and recent git-activity
+hotspots. Write the ledger (format in step 4) with a one-screen **map** — bullets plus a
+`mermaid` flowchart of the main parts (≤ 15 nodes, labels in double quotes) — and show me the map.
+
+## 1. Sharpen the question
+Before answering, restate what I'm really after. If the question is vague, rests on an unverified
+assumption, or is too broad to answer with evidence, say so and offer 2–3 sharper variants
+(recommended first, one-line reason each) — then answer the one I pick. If it is already sharp, say
+so and proceed; don't block on trivia.
+
+## 2. Answer with evidence
+Investigate in parallel where independent: Grep/Read, `git log -S` / `git blame` for "why"
+questions, and read-only runs of tests or the binary when that settles it. Answer concisely, then:
+- cite `file:line` for every claim;
+- tag each claim **Verified** (you read or ran it) or **Inferred** (with `Confidence: NN%`);
+- name what you did not check.
+
+## 3. Nudge — one hint
+End each answer with **one hint**: a single line, starting `Hint:`, that points at where my
+understanding is thinnest — the gap in the map, or an Inferred claim nobody has verified — and
+names the lens that would expose it. A hint says *where to look*, not *what to ask*.
+
+**Never list** candidate next questions, and don't phrase the hint as a question: I learn more
+when I form the question myself. If I ask for more help, give another hint (a different lens, or a
+little more specific) — still not a ready-made question.
+
+The lenses to draw on:
+- **Structure** — the parts and their boundaries.
+- **Flow** — one concrete input or request, traced end-to-end.
+- **Contract** — invariants, types, and error handling at a boundary.
+- **Rationale** — why it is this way (history, commits, rejected alternatives).
+- **Change impact** — what breaks if something changes; where a new feature would go.
+- **Failure** — edge cases, concurrency, what is untested.
+
+Prefer a lens I haven't used yet, and point at something concrete (a file, a boundary, a claim)
+rather than a topic. If I keep asking "what" questions, hint toward "why" and "what if".
+Example: `Hint: (Failure) the retry path in src/queue.rs is only Inferred — nothing here shows
+what happens when the broker is down.`
+
+## 4. Update the ledger — quietly
+Update it after **every** answer — I may close the session at any moment without saying stop.
+**Don't edit the ledger yourself**: an inline edit shows me a diff that repeats the answer I just
+read. Instead hand the update to a **background subagent** (`model: haiku` is enough) with the exact
+text to write, and carry on with the conversation. Keep one ledger writer at a time — if the
+previous update is still running, wait for it before starting the next, so they never collide.
+Only if subagents are unavailable, edit it directly and keep the change small. Don't mention the
+update in your reply. The helper writes with the **Write or Edit tool**, never through Bash: the
+write is what triggers ocgen to re-render the HTML page, so a Bash write leaves the page stale.
+
+The ledger has exactly this layout (ocgen draws its page from it — keep the headings and keys):
+
+````
+Topic: <human-readable topic>
+Summary: <one or two sentences: what this study covers, phase by phase>
+Updated: <date>   Commit: <output of git rev-parse --short HEAD>
+Status: <e.g. Phase 2 in progress>
+## Resume point
+Last question: <the question as sharpened>
+Hint: (<Lens>) <the hint that followed it>
+## Mental model
+- <≤ 7 bullets: what I understand so far>
+## Map
+- <one screen of bullets: entry points, modules, data flow>
+```mermaid
+flowchart LR
+  cli["src/cli.rs"]:::blue --> core["src/lib.rs"]:::orange
+```
+## Phase <n> · <short name>
+<one-line intro, with its source file>
+### <card title>
+<one-line lead>
+<the report: Markdown and visual blocks — see "The report" below>
+## Q&A log
+### Q<n> · <Lens> · <Verified|Inferred NN%>
+Q: <the question as sharpened>
+A: <one-line answer>
+Cites: <file:line>, <file:line>
+Hint: (<Lens>) <the hint>
+## Open questions
+- <open question or hypothesis>
+## Glossary
+- **<term>** — <meaning, with its file>
+````
+
+Rewrite the header (down to **Mental model**) each time. Append each answer to the **Q&A log** in
+≤ 4 lines: the `Q:` `A:` `Cites:` `Hint:` lines under a `### Q<n>` heading that names the lens the
+question used (one of the six in step 3) and its evidence — `Verified`, or `Inferred` with its
+confidence (`Inferred 70%`); a stale answer gets ` · Stale` appended to its heading, and each
+discrepancy you found gets one extra `Note:` line. Refresh the **Map** (diagram included), the
+**Glossary** of project terms, and **Open questions**. If the ledger is in an older layout, convert
+it on this update.
+
+**The report.** Each `## Phase <n> · <name>` section is one tab of the page: a phase is a run of
+questions on one theme (start the next phase when my line of inquiry moves on, and update
+`Status:`). After every answer, the helper adds the answer to the current phase as one or more
+`### ` cards — the evidence laid out to be scanned, not the prose repeated. Pick the form that fits
+the finding; add `[half]` to a card title to put two cards side by side, and a `---` line ends a card
+so what follows (a hint, stat tiles) sits on the phase itself:
+
+| Content | Write |
+|---|---|
+| Key numbers | a `stats` block: `value \| caption` per tile |
+| Findings with evidence | a `claims` block: `Verified \| claim \| detail with file:line` — label `Verified`, `Inferred 70%`, `Corrected` (a claim you revised), or a `#color` tag |
+| A sequence (pipeline, call path, CI steps) | a `steps` block: `n \| title \| detail \| file:line`; `n #orange` colours a step |
+| Counts to compare | a `bars` block: `label \| number \| hover detail` |
+| Attributes, settings, versions | a Markdown table |
+| One record changing across stages | a `compare` block: `Title #blue \| subtitle`, then `key \| value` rows (`**key**` = changed here); `---` starts the next column |
+| Layers or stores side by side | a `stack` block: `Title #blue \| subtitle`, then `layer \| detail \| tag` rows (`layer !` highlights, `layer ~` = not stored); `---` next column |
+| Short verdicts side by side | a `cards` block: `✓ title #green \| body` |
+| Flows and dependencies | a `mermaid` flowchart; `node:::blue` colours a node |
+| The hint | a callout line: `> **Hint (<Lens>):** <hint>` |
+
+Each block is a fenced block named after its kind (` ```claims `), one row per line, cells separated
+by ` | `. `legend: #blue Setup · #orange Build` adds a colour legend; colours are blue, orange, green,
+red, purple, teal, yellow and gray. A short `Source: <file:line>` line under a card becomes its
+footnote. Put only what you verified or inferred in the answer into the report, with the same
+evidence tags, and label made-up illustrative values as such. The **Q&A log** stays the compact
+history to resume from; the phases are the report I read.
+
+## 5. Checkpoint
+Every ~5 questions, or when I ask: summarize my mental model in ≤ 10 bullets (and have the
+background helper refresh the ledger's **Mental model** from it), list the biggest remaining unknowns, and optionally ask me to explain a piece back in my own words — then point out
+gaps or misconceptions.
+
+Loop steps 1–4 until I say stop. On exit, have the helper finalize the ledger (resume point and
+mental model included) and wait for it to finish, list the top open questions, and remind me that
+`/inquire` with no arguments picks up from here. If I want to change something, hand off to
+`/deliver <goal>` with the relevant ledger section as context.

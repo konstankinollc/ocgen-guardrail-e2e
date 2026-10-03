@@ -1,0 +1,447 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "GIT_CONFIG_COUNT": "1",
+    "GIT_CONFIG_KEY_0": "credential.helper",
+    "GIT_CONFIG_VALUE_0": "",
+    "LOOP_GUARD_MAX_BLOCKS": "3",
+    "OCGEN_CHECK_CMD": "sh ./check.sh",
+    "OCGEN_SANDBOX": "1",
+    "OCGEN_SANDBOX_DENY_ENV": "GH_TOKEN GITHUB_TOKEN GH_ENTERPRISE_TOKEN GITHUB_ENTERPRISE_TOKEN GITLAB_TOKEN AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AZURE_CLIENT_SECRET GOOGLE_APPLICATION_CREDENTIALS NPM_TOKEN NODE_AUTH_TOKEN YARN_NPM_AUTH_TOKEN CARGO_REGISTRY_TOKEN TWINE_USERNAME TWINE_PASSWORD PYPI_TOKEN UV_PUBLISH_TOKEN POETRY_PYPI_TOKEN_PYPI GEM_HOST_API_KEY DOCKER_PASSWORD KUBECONFIG PULUMI_ACCESS_TOKEN",
+    "OCGEN_SANDBOX_DENY_READ": "~/.ssh ~/.aws ~/.config/gh ~/.netrc ~/.docker/config.json ~/.kube ~/.config/gcloud ~/.azure ~/.git-credentials ~/.config/git/credentials ~/.npmrc ~/.yarnrc.yml ~/.cargo/credentials ~/.cargo/credentials.toml ~/.pypirc ~/.gem/credentials ~/.terraform.d/credentials.tfrc.json ~/.pulumi/credentials.json",
+    "OCGEN_SANDBOX_DENY_WRITE": "~/.claude ~/.claude.json ~/.bashrc ~/.bash_profile ~/.profile ~/.zshrc ~/.zshenv ~/.zprofile ~/.gitconfig ~/.config/git ~/.ssh ~/.local/bin ~/.cargo/bin ./.claude/settings.json ./.claude/settings.local.json ./.claude/hooks ./.claude/skills ./.claude/agents ./.claude/commands ./.claude/statusline.sh ./.claude/.ocgen-state.json ./.mcp.json ./.git/hooks ./.git/config",
+    "OCGEN_WEBFETCH_DOMAINS": "docs.github.com git-scm.com docs.rs doc.rust-lang.org docs.python.org nodejs.org developer.mozilla.org go.dev pkg.go.dev kubernetes.io developer.hashicorp.com registry.terraform.io docs.aws.amazon.com cloud.google.com learn.microsoft.com datatracker.ietf.org www.rfc-editor.org code.claude.com docs.anthropic.com",
+    "SUBAGENT_CONFIDENCE_THRESHOLD": "96",
+    "SUBAGENT_READONLY_ROLES": "explorer reviewer Explore Plan",
+    "TEAM_APPROVAL_GATE": "1",
+    "TEAM_CONFIDENCE_THRESHOLD": "95",
+    "TEAM_PLAN_GATE": "1",
+    "TEAM_READONLY_ROLES": "explorer reviewer",
+    "TEAM_RISK_ROUNDS": "1",
+    "TEAM_TASK_GATE": "1"
+  },
+  "hooks": {
+    "ConfigChange": [
+      {
+        "hooks": [
+          {
+            "command": "if [ \"$(ocgen hook --check 2>/dev/null)\" = \"ocgen-hooks 9\" ]; then ocgen hook config-audit; else sh \"${CLAUDE_PROJECT_DIR}/.claude/hooks/config-audit.sh\"; fi",
+            "shell": "bash",
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "if [ \"$(ocgen hook --check 2>/dev/null)\" = \"ocgen-hooks 9\" ]; then ocgen hook inquire-notes; else sh \"${CLAUDE_PROJECT_DIR}/.claude/hooks/inquire-notes.sh\"; fi",
+            "shell": "bash",
+            "type": "command"
+          }
+        ],
+        "matcher": "Write|Edit|MultiEdit"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "if [ \"$(ocgen hook --check 2>/dev/null)\" = \"ocgen-hooks 9\" ]; then ocgen hook team-approval-gate; else sh \"${CLAUDE_PROJECT_DIR}/.claude/hooks/team-approval-gate.sh\"; fi",
+            "shell": "bash",
+            "type": "command"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "command": "if [ \"$(ocgen hook --check 2>/dev/null)\" = \"ocgen-hooks 9\" ]; then ocgen hook https-only-fetch; else sh \"${CLAUDE_PROJECT_DIR}/.claude/hooks/https-only-fetch.sh\"; fi",
+            "shell": "bash",
+            "type": "command"
+          }
+        ],
+        "matcher": "WebFetch"
+      },
+      {
+        "hooks": [
+          {
+            "command": "if [ \"$(ocgen hook --check 2>/dev/null)\" = \"ocgen-hooks 9\" ]; then ocgen hook drop-noop-cd; else sh \"${CLAUDE_PROJECT_DIR}/.claude/hooks/drop-noop-cd.sh\"; fi",
+            "shell": "bash",
+            "type": "command"
+          }
+        ],
+        "matcher": "Bash"
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "echo 'Tip: run /intake to gather requirements, then /refine to iterate before approval. run /improve-prompt to sharpen a prompt or an agent'\\''s system prompt.'",
+            "shell": "bash",
+            "type": "command"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "command": "echo 'Context was just compacted. Re-read the project rules in .claude/rules/ (workflow, team, loop discipline). If an /inquire study session is active, re-read its ledger resume point in .claude/notes/ before continuing.'",
+            "shell": "bash",
+            "type": "command"
+          }
+        ],
+        "matcher": "compact"
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "command": "if [ \"$(ocgen hook --check 2>/dev/null)\" = \"ocgen-hooks 9\" ]; then ocgen hook subagent-confidence-gate; else sh \"${CLAUDE_PROJECT_DIR}/.claude/hooks/subagent-confidence-gate.sh\"; fi",
+            "shell": "bash",
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "command": "if [ \"$(ocgen hook --check 2>/dev/null)\" = \"ocgen-hooks 9\" ]; then ocgen hook subagent-confidence-gate; else sh \"${CLAUDE_PROJECT_DIR}/.claude/hooks/subagent-confidence-gate.sh\"; fi",
+            "shell": "bash",
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "TaskCompleted": [
+      {
+        "hooks": [
+          {
+            "command": "if [ \"$(ocgen hook --check 2>/dev/null)\" = \"ocgen-hooks 9\" ]; then ocgen hook team-task-completed; else sh \"${CLAUDE_PROJECT_DIR}/.claude/hooks/team-task-completed.sh\"; fi",
+            "shell": "bash",
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "TaskCreated": [
+      {
+        "hooks": [
+          {
+            "command": "if [ \"$(ocgen hook --check 2>/dev/null)\" = \"ocgen-hooks 9\" ]; then ocgen hook team-task-created; else sh \"${CLAUDE_PROJECT_DIR}/.claude/hooks/team-task-created.sh\"; fi",
+            "shell": "bash",
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "TeammateIdle": [
+      {
+        "hooks": [
+          {
+            "command": "if [ \"$(ocgen hook --check 2>/dev/null)\" = \"ocgen-hooks 9\" ]; then ocgen hook team-teammate-idle; else sh \"${CLAUDE_PROJECT_DIR}/.claude/hooks/team-teammate-idle.sh\"; fi",
+            "shell": "bash",
+            "type": "command"
+          }
+        ]
+      }
+    ]
+  },
+  "model": "opus",
+  "outputStyle": "ocgen-concise",
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "Edit",
+      "Write",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)"
+    ],
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Bash(git -c alias*)",
+      "Bash(gh pr merge*)",
+      "Bash(gh release*)",
+      "Bash(gh workflow run*)",
+      "Bash(terraform apply*)",
+      "Bash(terraform destroy*)",
+      "Bash(pulumi up*)",
+      "Bash(pulumi destroy*)",
+      "Bash(kubectl apply*)",
+      "Bash(kubectl delete*)",
+      "Bash(kubectl rollout restart*)",
+      "Bash(kubectl rollout undo*)",
+      "Bash(kubectl set *)",
+      "Bash(helm install*)",
+      "Bash(helm upgrade*)",
+      "Bash(helm uninstall*)",
+      "Bash(npm publish*)",
+      "Bash(npm * publish*)",
+      "Bash(pnpm publish*)",
+      "Bash(pnpm * publish*)",
+      "Bash(yarn publish*)",
+      "Bash(yarn * publish*)",
+      "Bash(bun publish*)",
+      "Bash(cargo publish*)",
+      "Bash(cargo * publish*)",
+      "Bash(docker push*)",
+      "Bash(docker * push*)",
+      "Bash(docker *--push*)",
+      "Bash(curl *--data*)",
+      "Bash(curl *--json*)",
+      "Bash(curl *--upload-file*)",
+      "Bash(curl *--form*)",
+      "Bash(curl *-T *)",
+      "Bash(curl *-F *)",
+      "Bash(curl *-d *)",
+      "Bash(ssh *)",
+      "Bash(scp *)",
+      "Bash(rsync *)",
+      "Edit(/.claude/hooks/**)",
+      "Edit(/.claude/settings.json)",
+      "Edit(/.claude/settings.local.json)",
+      "Edit(/.claude/.ocgen-state.json)",
+      "Edit(/.claude/statusline.sh)",
+      "Edit(//**/.git/hooks/**)",
+      "Bash(ocgen edit*)",
+      "Bash(ocgen doctor*)"
+    ],
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Read(./.env)",
+      "Read(./.env.local)",
+      "Read(./**/*.pem)",
+      "Read(./**/*.key)",
+      "Read(./**/*.tfstate)",
+      "Read(./**/*.tfstate.*)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.config/gh/**)",
+      "Read(~/.netrc)",
+      "Read(~/.docker/config.json)",
+      "Read(~/.kube/**)",
+      "Read(~/.config/gcloud/**)",
+      "Edit(~/.claude/ocgen/**)",
+      "Bash(ocgen approve*)",
+      "Bash(gh issue create*)",
+      "Agent(Explore)"
+    ]
+  },
+  "sandbox": {
+    "allowUnsandboxedCommands": false,
+    "credentials": {
+      "envVars": [
+        {
+          "mode": "deny",
+          "name": "GH_TOKEN"
+        },
+        {
+          "mode": "deny",
+          "name": "GITHUB_TOKEN"
+        },
+        {
+          "mode": "deny",
+          "name": "GH_ENTERPRISE_TOKEN"
+        },
+        {
+          "mode": "deny",
+          "name": "GITHUB_ENTERPRISE_TOKEN"
+        },
+        {
+          "mode": "deny",
+          "name": "GITLAB_TOKEN"
+        },
+        {
+          "mode": "deny",
+          "name": "AWS_ACCESS_KEY_ID"
+        },
+        {
+          "mode": "deny",
+          "name": "AWS_SECRET_ACCESS_KEY"
+        },
+        {
+          "mode": "deny",
+          "name": "AWS_SESSION_TOKEN"
+        },
+        {
+          "mode": "deny",
+          "name": "AZURE_CLIENT_SECRET"
+        },
+        {
+          "mode": "deny",
+          "name": "GOOGLE_APPLICATION_CREDENTIALS"
+        },
+        {
+          "mode": "deny",
+          "name": "NPM_TOKEN"
+        },
+        {
+          "mode": "deny",
+          "name": "NODE_AUTH_TOKEN"
+        },
+        {
+          "mode": "deny",
+          "name": "YARN_NPM_AUTH_TOKEN"
+        },
+        {
+          "mode": "deny",
+          "name": "CARGO_REGISTRY_TOKEN"
+        },
+        {
+          "mode": "deny",
+          "name": "TWINE_USERNAME"
+        },
+        {
+          "mode": "deny",
+          "name": "TWINE_PASSWORD"
+        },
+        {
+          "mode": "deny",
+          "name": "PYPI_TOKEN"
+        },
+        {
+          "mode": "deny",
+          "name": "UV_PUBLISH_TOKEN"
+        },
+        {
+          "mode": "deny",
+          "name": "POETRY_PYPI_TOKEN_PYPI"
+        },
+        {
+          "mode": "deny",
+          "name": "GEM_HOST_API_KEY"
+        },
+        {
+          "mode": "deny",
+          "name": "DOCKER_PASSWORD"
+        },
+        {
+          "mode": "deny",
+          "name": "KUBECONFIG"
+        },
+        {
+          "mode": "deny",
+          "name": "PULUMI_ACCESS_TOKEN"
+        }
+      ],
+      "files": [
+        {
+          "mode": "deny",
+          "path": "~/.ssh"
+        },
+        {
+          "mode": "deny",
+          "path": "~/.aws"
+        },
+        {
+          "mode": "deny",
+          "path": "~/.config/gh"
+        },
+        {
+          "mode": "deny",
+          "path": "~/.netrc"
+        },
+        {
+          "mode": "deny",
+          "path": "~/.docker/config.json"
+        },
+        {
+          "mode": "deny",
+          "path": "~/.kube"
+        },
+        {
+          "mode": "deny",
+          "path": "~/.config/gcloud"
+        },
+        {
+          "mode": "deny",
+          "path": "~/.azure"
+        },
+        {
+          "mode": "deny",
+          "path": "~/.git-credentials"
+        },
+        {
+          "mode": "deny",
+          "path": "~/.config/git/credentials"
+        },
+        {
+          "mode": "deny",
+          "path": "~/.npmrc"
+        },
+        {
+          "mode": "deny",
+          "path": "~/.yarnrc.yml"
+        },
+        {
+          "mode": "deny",
+          "path": "~/.cargo/credentials"
+        },
+        {
+          "mode": "deny",
+          "path": "~/.cargo/credentials.toml"
+        },
+        {
+          "mode": "deny",
+          "path": "~/.pypirc"
+        },
+        {
+          "mode": "deny",
+          "path": "~/.gem/credentials"
+        },
+        {
+          "mode": "deny",
+          "path": "~/.terraform.d/credentials.tfrc.json"
+        },
+        {
+          "mode": "deny",
+          "path": "~/.pulumi/credentials.json"
+        }
+      ]
+    },
+    "enabled": true,
+    "filesystem": {
+      "denyWrite": [
+        "~/.claude/ocgen",
+        "./.claude/statusline.sh",
+        "./.claude/.ocgen-state.json",
+        "./.git/hooks"
+      ]
+    },
+    "network": {
+      "allowedDomains": [
+        "github.com",
+        "api.github.com",
+        "*.githubusercontent.com",
+        "registry.npmjs.org",
+        "crates.io",
+        "static.crates.io",
+        "index.crates.io",
+        "pypi.org",
+        "files.pythonhosted.org",
+        "proxy.golang.org",
+        "registry.terraform.io",
+        "releases.hashicorp.com",
+        "api.anthropic.com"
+      ]
+    }
+  },
+  "statusLine": {
+    "command": "sh \"${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}/.claude/statusline.sh\"",
+    "type": "command"
+  },
+  "teammateMode": "in-process",
+  "worktree": {
+    "baseRef": "head"
+  }
+}

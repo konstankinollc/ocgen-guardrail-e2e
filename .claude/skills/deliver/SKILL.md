@@ -1,0 +1,60 @@
+---
+name: deliver
+description: Take a complex task end-to-end — sharpen, plan, research in parallel, gated execution
+argument-hint: "[the goal]"
+disable-model-invocation: true
+---
+Deliver this end-to-end: $ARGUMENTS
+
+Run the pipeline in order, and don't advance a phase until the previous one is solid. Scale it to
+the goal: for a small, clear goal, collapse phases 1–3 into a one-paragraph brief and get approval.
+
+## 0. Route the goal
+Classify the goal before anything else, state the classification, and let me override it:
+- **Build / change** — produce or modify something → continue with phases 1–6.
+- **Understand** — learn how or why the code works, no change wanted yet → run the `/inquire` loop
+  instead of this pipeline.
+- **Mixed** — understand, then change → run a short `/inquire` orientation first, then continue with
+  phase 1 using its ledger as context.
+
+## 1. Sharpen the goal
+If the goal names an intent file from `/intent` (or an issue that links one), read it first and
+check its sign-off: `Status: Accepted`, with every approver approved in its Sign-off section. If not, don't start — list who is still pending and
+stop. If I insist, say plainly that starting now bypasses the approvers' sign-off, and start only after
+I confirm explicitly. Then treat its approved plan as the brief: confirm with me what changed since,
+and skip what it already settles in phases 1–3.
+Rewrite the goal into a crisp brief using the prompt-engineering technique: explicit role, task,
+and success criteria; remove ambiguity.
+
+## 2. Gather requirements
+First skim the relevant code (read-only, in parallel) so every question is informed — never ask
+what the code already answers. Then interview me one question at a time — 2–4 default options
+(recommended first), only what resolves real ambiguity; infer the rest and say what you inferred.
+Cover scope, constraints, success criteria, and out-of-scope.
+
+## 3. Plan and get approval
+Draft a numbered task list + intent + a **risk register** (every risk gets a mitigation task).
+Present it and **invite push-back**; iterate until I approve. Do not execute yet.
+
+## 4. Research in parallel (read-only)
+Investigate concurrently where independent: fetch the relevant online HTML/PDF docs, and study the
+local source. Run these in parallel — exploration is side-effect-free. If what you find contradicts
+the approved plan, go back to phase 3 and re-plan rather than pushing through — at most 2 re-plans;
+after that, stop and present the conflict to me instead of looping.
+
+## 5. Execute under the gates
+Work the approved plan. For each decision or completed task, **state a `Confidence: NN%`** and
+surface gated decisions for me to confirm; keep working a risk until its mitigation round is done.
+Give each task at most 3 attempts: if the same approach fails twice, change it; on the third
+failure, stop and report the blocker with evidence.
+Do not perform high-impact external actions (deploys, `git push`/merge, cloud mutations) without my
+explicit approval.
+
+## 6. Synthesize
+Summarize what was done, the decisions and their confidence, open risks, and next steps. Report
+anything left unresolved — including every entry in `.claude/loop-guard/escalations.md` — as
+unresolved, not done. If a coordinator session is named, report status to it with `SendMessage`.
+
+For several independent workstreams at once, run one `claude --worktree <name> --name <name>` session
+per workstream (each running `/deliver`) and coordinate via `/list-agents` + `SendMessage` — see the
+"Multi-session delivery" rule.

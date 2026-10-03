@@ -1,0 +1,43 @@
+---
+name: team-plan
+description: Build and approve the team's shared plan before execution
+argument-hint: "[what the team should accomplish]"
+disable-model-invocation: true
+---
+Goal: $ARGUMENTS
+
+Design the team's **shared plan** collaboratively before any teammate starts work.
+
+## 1. Interview
+Ask well-designed questions one at a time (2–4 default options, recommended first, one-line
+reason). Cover scope, constraints, success criteria, edge cases, and out-of-scope items. Infer
+the rest and state what you inferred.
+
+## 2. Draft the shared task list
+Write the intent and a numbered task list to `.claude/team/plan.md`. Give every task an id and
+the teammate who owns it, by name: `Owner: <teammate-name>`. Name teammates after their role,
+numbered when a role has several (`implementer-1`, `implementer-2`); the roles are: explorer, implementer, reviewer.
+Two tasks must not touch the same files. A task may narrow the project check with a `Check:` line
+in its description — the project check plus arguments (e.g. `Check: cargo test -p parser`); any
+other `Check:` line is ignored.
+
+## 3. Risk register — a mitigation round for EVERY risk
+In the same file, list every risk you can foresee. Write each risk on **one line** carrying an
+`Owner: <teammate-name>` (the teammate responsible for mitigating it) and a `Mitigation: pending`
+status — e.g. `- Risk: data loss — Owner: implementer-1 — Mitigation: pending`. No risk ships
+without an owner and its own mitigation round; leave it `pending` until addressed, then mark it
+`done` or `accepted`. The `TeammateIdle` hook holds a teammate only while a risk **it owns** is
+pending; a role as owner (`Owner: implementer`) holds no one, since several teammates may share a
+role.
+
+## 4. Present and refine
+Present the plan and **explicitly invite push-back with reasons.** Answer questions and fold in
+the updates/improvements requested. Iterate until the user approves. Do NOT spawn execution
+teammates or create execution tasks yet.
+
+## 5. Approve
+Once the user approves, replace any `Status:` line in `.claude/team/plan.md` with
+`Status: APPROVED session=${CLAUDE_SESSION_ID}`, then hand off to `/team` to execute. The approval
+holds for this plan and this team run only: editing the plan, or a later session, makes it stale
+until the user approves again. Each teammate must end its task with a last message carrying a line
+`Confidence: NN%` and be ≥ 95% confident before completing a task.

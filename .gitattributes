@@ -1,0 +1,5 @@
+# ocgen: generated files keep LF line endings (CRLF breaks the sh hooks)
+.claude/** text=auto eol=lf
+.mcp.json text=auto eol=lf
+.worktreeinclude text=auto eol=lf
+# ocgen: end
